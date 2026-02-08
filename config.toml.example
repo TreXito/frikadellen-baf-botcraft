@@ -1,0 +1,74 @@
+# Frikadellen BAF Configuration File for Minecraft 1.21.11 + Botcraft
+
+# Your Minecraft account username
+INGAME_NAME = ""
+
+# Microsoft account authentication (required for Hypixel)
+# The bot will prompt for authentication on first run
+# Credentials are cached by Botcraft
+
+# Webhook URL for Discord notifications (optional)
+WEBHOOK_URL = ""
+
+# Cofl websocket URL
+WEBSOCKET_URL = "wss://sky.coflnet.com/modsocket"
+
+# Action delay in milliseconds
+FLIP_ACTION_DELAY = 100
+
+# Enable/disable flip types
+ENABLE_AH_FLIPS = true
+ENABLE_BAZAAR_FLIPS = true
+
+# Use Cofl chat messages
+USE_COFL_CHAT = true
+
+# Auction duration in hours when listing items
+AUCTION_DURATION_HOURS = 24
+
+# Auto booster cookie: if remaining cookie duration on startup is less than this value (in hours),
+# automatically buy and consume a booster cookie (default: 24 hours)
+# Set to 0 to disable automatic cookie purchasing
+AUTO_COOKIE = 24
+
+# Bed flips are clicked 3 times with this setting. First delay in milliseconds before it should mathematically work.
+# Once exactly at the time and once after the time. Disable it with a value less than 0.
+BED_MULTIPLE_CLICKS_DELAY = 50
+
+# Enable continuous bed spam clicking instead of fixed number of clicks. More aggressive but may be more effective.
+BED_SPAM = false
+
+# Delay in milliseconds between each click when BED_SPAM is enabled. Lower values = faster clicking (minimum: 1ms)
+BED_SPAM_CLICK_DELAY = 5
+
+# Skip configuration - automatically skip confirmation on certain flips
+# ALWAYS: Always skip confirmation (requires FLIP_ACTION_DELAY >= 150)
+# MIN_PROFIT: Skip if profit is above this value (in coins)
+# USER_FINDER: Skip if flip was found by USER
+# SKINS: Skip if the item is a skin
+# PROFIT_PERCENTAGE: Skip if profit percentage is above this value
+# MIN_PRICE: Skip if starting bid is above this value (in coins)
+[SKIP]
+ALWAYS = false
+MIN_PROFIT = 1000000
+USER_FINDER = false
+SKINS = false
+PROFIT_PERCENTAGE = 50
+MIN_PRICE = 10000000
+
+# Proxy configuration (optional)
+# PROXY_ENABLED: Enable or disable proxy usage (true/false)
+# PROXY: Proxy server in IP:port format (e.g., "127.0.0.1:8080")
+# PROXY_USERNAME: Proxy authentication username (optional)
+# PROXY_PASSWORD: Proxy authentication password (optional)
+PROXY_ENABLED = false
+PROXY = ""
+PROXY_USERNAME = ""
+PROXY_PASSWORD = ""
+
+# Automatic account switching (optional)
+# ACCOUNTS: Comma-separated list of Minecraft usernames (e.g., "user1,user2,user3")
+# AUTO_SWITCHING: Time allocation for each account in minutes (e.g., "user1:8,user2:8,user3:8")
+# The bot will automatically switch between accounts based on the time allocation
+ACCOUNTS = ""
+AUTO_SWITCHING = ""
