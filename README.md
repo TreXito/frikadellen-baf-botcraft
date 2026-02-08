@@ -41,9 +41,23 @@ This is NOT a Remote Access Trojan (RAT). The source code is open and auditable.
   - websocketpp (WebSocket client)
   - OpenSSL (HTTPS/WSS)
 
-## Building from Source
+## Installation
 
-### 1. Install Botcraft
+### Option 1: Download Pre-built Executable
+
+Download the latest release for your platform from the [Releases page](https://github.com/TreXito/frikadellen-baf-botcraft/releases):
+
+- **Linux**: `frikadellen-baf-vX.X.X-linux-x64` (e.g., `frikadellen-baf-v1.0.0-linux-x64`)
+- **Windows**: `frikadellen-baf-vX.X.X-windows-x64.exe` (e.g., `frikadellen-baf-v1.0.0-windows-x64.exe`)
+- **macOS**: `frikadellen-baf-vX.X.X-macos-x64` (e.g., `frikadellen-baf-v1.0.0-macos-x64`)
+
+Releases are tagged with version numbers (e.g., `v1.0.0` or `1.0.0`).
+
+**Note**: Pre-built executables are compiled without Botcraft integration (demonstration mode only). For full functionality, you need to build from source with Botcraft.
+
+### Option 2: Building from Source
+
+#### 1. Install Botcraft
 
 Follow the [Botcraft installation guide](https://github.com/adepierre/Botcraft) to build Botcraft for Minecraft 1.21.11:
 
@@ -59,7 +73,7 @@ cmake --build . --config Release
 sudo cmake --install .
 ```
 
-### 2. Build BAF
+#### 2. Build BAF
 
 ```bash
 # Clone this repository

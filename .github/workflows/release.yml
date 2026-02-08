@@ -1,0 +1,158 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+      - '[0-9]*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag for the release'
+        required: false
+        type: string
+      build_type:
+        description: 'CMake build type'
+        required: false
+        default: 'Release'
+        type: choice
+        options:
+          - Release
+          - Debug
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            name: linux
+            artifact_name: frikadellen-baf
+            asset_suffix: linux-x64
+          - os: windows-latest
+            name: windows
+            artifact_name: frikadellen-baf.exe
+            asset_suffix: windows-x64.exe
+          - os: macos-latest
+            name: macos
+            artifact_name: frikadellen-baf
+            asset_suffix: macos-x64
+
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Install dependencies (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake build-essential nlohmann-json3-dev
+      
+      - name: Install dependencies (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew install cmake nlohmann-json
+      
+      - name: Cache vcpkg (Windows)
+        if: matrix.os == 'windows-latest'
+        uses: actions/cache@v4
+        with:
+          path: vcpkg
+          key: ${{ runner.os }}-vcpkg-nlohmann-json
+      
+      - name: Install dependencies (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          # vcpkg will be used for nlohmann-json
+          if (-not (Test-Path vcpkg)) {
+            git clone https://github.com/Microsoft/vcpkg.git
+            .\vcpkg\bootstrap-vcpkg.bat
+          }
+          .\vcpkg\vcpkg install nlohmann-json:x64-windows
+      
+      - name: Configure CMake (Linux/macOS)
+        if: matrix.os != 'windows-latest'
+        run: |
+          mkdir -p build
+          cd build
+          BUILD_TYPE="${{ inputs.build_type || 'Release' }}"
+          cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_WITH_BOTCRAFT=OFF ..
+      
+      - name: Configure CMake (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          mkdir build
+          cd build
+          $BUILD_TYPE = "${{ inputs.build_type || 'Release' }}"
+          cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_WITH_BOTCRAFT=OFF -DCMAKE_TOOLCHAIN_FILE=..\vcpkg\scripts\buildsystems\vcpkg.cmake ..
+      
+      - name: Build
+        shell: bash
+        run: |
+          BUILD_TYPE="${{ inputs.build_type || 'Release' }}"
+          cmake --build build --config $BUILD_TYPE
+      
+      - name: Prepare artifact
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          # Use provided version, tag, or default to 'dev' if none available
+          if [ -n "${{ inputs.version }}" ]; then
+            VERSION="${{ inputs.version }}"
+          elif [ "${{ github.ref_type }}" == "tag" ]; then
+            VERSION="${{ github.ref_name }}"
+          else
+            VERSION="dev-${{ github.sha }}"
+            VERSION="${VERSION:0:15}"  # Truncate to reasonable length
+          fi
+          ASSET_NAME="frikadellen-baf-$VERSION-${{ matrix.asset_suffix }}"
+          BUILD_TYPE="${{ inputs.build_type || 'Release' }}"
+          if [ "${{ matrix.os }}" == "windows-latest" ]; then
+            cp build/$BUILD_TYPE/${{ matrix.artifact_name }} artifacts/$ASSET_NAME
+          else
+            cp build/${{ matrix.artifact_name }} artifacts/$ASSET_NAME
+          fi
+          echo "ASSET_NAME=$ASSET_NAME" >> $GITHUB_ENV
+      
+      - name: Make executable (Linux/macOS)
+        if: matrix.os != 'windows-latest'
+        run: |
+          chmod +x artifacts/${{ env.ASSET_NAME }}
+      
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}-executable
+          path: artifacts/*
+  
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      
+      - name: Display structure
+        run: ls -R artifacts
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            artifacts/**/*
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
