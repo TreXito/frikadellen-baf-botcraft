@@ -3,8 +3,10 @@
 #include "config.hpp"
 #include "webhook.hpp"
 #include "utils.hpp"
+#ifdef WITH_BOTCRAFT
 #include <botcraft/Game/AssetsManager.hpp>
 #include <botcraft/Game/Inventory/InventoryManager.hpp>
+#endif
 
 namespace baf {
 

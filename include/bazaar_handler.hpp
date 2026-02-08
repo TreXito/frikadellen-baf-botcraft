@@ -2,7 +2,9 @@
 
 #include <string>
 #include <memory>
+#ifdef WITH_BOTCRAFT
 #include <botcraft/Game/BaseClient.hpp>
+#endif
 #include "cofl_client.hpp"
 
 namespace Botcraft {
