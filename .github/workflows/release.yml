@@ -6,6 +6,19 @@ on:
       - 'v*'
       - '[0-9]*'
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag for the release'
+        required: false
+        type: string
+      build_type:
+        description: 'CMake build type'
+        required: false
+        default: 'Release'
+        type: choice
+        options:
+          - Release
+          - Debug
 
 jobs:
   build:
@@ -44,13 +57,21 @@ jobs:
         run: |
           brew install cmake nlohmann-json
       
+      - name: Cache vcpkg (Windows)
+        if: matrix.os == 'windows-latest'
+        uses: actions/cache@v4
+        with:
+          path: vcpkg
+          key: ${{ runner.os }}-vcpkg-nlohmann-json
+      
       - name: Install dependencies (Windows)
         if: matrix.os == 'windows-latest'
         run: |
-          choco install cmake -y
           # vcpkg will be used for nlohmann-json
-          git clone https://github.com/Microsoft/vcpkg.git
-          .\vcpkg\bootstrap-vcpkg.bat
+          if (-not (Test-Path vcpkg)) {
+            git clone https://github.com/Microsoft/vcpkg.git
+            .\vcpkg\bootstrap-vcpkg.bat
+          }
           .\vcpkg\vcpkg install nlohmann-json:x64-windows
       
       - name: Configure CMake (Linux/macOS)
@@ -58,26 +79,32 @@ jobs:
         run: |
           mkdir -p build
           cd build
-          cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_WITH_BOTCRAFT=OFF ..
+          BUILD_TYPE="${{ inputs.build_type || 'Release' }}"
+          cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_WITH_BOTCRAFT=OFF ..
       
       - name: Configure CMake (Windows)
         if: matrix.os == 'windows-latest'
         run: |
           mkdir build
           cd build
-          cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_WITH_BOTCRAFT=OFF -DCMAKE_TOOLCHAIN_FILE=..\vcpkg\scripts\buildsystems\vcpkg.cmake ..
+          $BUILD_TYPE = "${{ inputs.build_type || 'Release' }}"
+          cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_WITH_BOTCRAFT=OFF -DCMAKE_TOOLCHAIN_FILE=..\vcpkg\scripts\buildsystems\vcpkg.cmake ..
       
       - name: Build
         run: |
-          cmake --build build --config Release
+          BUILD_TYPE="${{ inputs.build_type || 'Release' }}"
+          cmake --build build --config $BUILD_TYPE
       
       - name: Prepare artifact
         shell: bash
         run: |
           mkdir -p artifacts
-          ASSET_NAME="frikadellen-baf-${{ github.ref_name }}-${{ matrix.asset_suffix }}"
+          # Use provided version or github.ref_name
+          VERSION="${{ inputs.version || github.ref_name }}"
+          ASSET_NAME="frikadellen-baf-$VERSION-${{ matrix.asset_suffix }}"
+          BUILD_TYPE="${{ inputs.build_type || 'Release' }}"
           if [ "${{ matrix.os }}" == "windows-latest" ]; then
-            cp build/Release/${{ matrix.artifact_name }} artifacts/$ASSET_NAME
+            cp build/$BUILD_TYPE/${{ matrix.artifact_name }} artifacts/$ASSET_NAME
           else
             cp build/${{ matrix.artifact_name }} artifacts/$ASSET_NAME
           fi
