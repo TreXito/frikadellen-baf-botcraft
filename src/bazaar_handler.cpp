@@ -3,8 +3,10 @@
 #include "config.hpp"
 #include "webhook.hpp"
 #include "utils.hpp"
+#ifdef WITH_BOTCRAFT
 #include <botcraft/Game/AssetsManager.hpp>
 #include <botcraft/Game/Inventory/InventoryManager.hpp>
+#endif
 
 namespace baf {
 
@@ -110,7 +112,7 @@ bool BazaarHandler::placeBazaarOrder(const std::string& item_name, int amount,
     Logger::getInstance().info("[BazaarDebug] Would set price: " + std::to_string(price_per_unit));
     Logger::getInstance().info("[BazaarDebug] Would confirm order");
     
-    sleep(config.getInstance().getFlipActionDelay());
+    sleep(Config::getInstance().getFlipActionDelay());
     
     return true;
 }
