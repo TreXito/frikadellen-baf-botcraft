@@ -91,6 +91,7 @@ jobs:
           cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_WITH_BOTCRAFT=OFF -DCMAKE_TOOLCHAIN_FILE=..\vcpkg\scripts\buildsystems\vcpkg.cmake ..
       
       - name: Build
+        shell: bash
         run: |
           BUILD_TYPE="${{ inputs.build_type || 'Release' }}"
           cmake --build build --config $BUILD_TYPE
@@ -99,8 +100,15 @@ jobs:
         shell: bash
         run: |
           mkdir -p artifacts
-          # Use provided version or github.ref_name
-          VERSION="${{ inputs.version || github.ref_name }}"
+          # Use provided version, tag, or default to 'dev' if none available
+          if [ -n "${{ inputs.version }}" ]; then
+            VERSION="${{ inputs.version }}"
+          elif [ "${{ github.ref_type }}" == "tag" ]; then
+            VERSION="${{ github.ref_name }}"
+          else
+            VERSION="dev-${{ github.sha }}"
+            VERSION="${VERSION:0:15}"  # Truncate to reasonable length
+          fi
           ASSET_NAME="frikadellen-baf-$VERSION-${{ matrix.asset_suffix }}"
           BUILD_TYPE="${{ inputs.build_type || 'Release' }}"
           if [ "${{ matrix.os }}" == "windows-latest" ]; then
